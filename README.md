@@ -199,41 +199,7 @@ pip freeze > requirements.txt  # Update requirements immediately
 - Simplified deployment pipeline
 - Version conflict prevention
 
-## 📁 Repository Structure
-
-```
-VTOLVision/
-├── � Research Documentation
-│   ├── �📄 README.md                    # Research overview and methodology
-│   ├── 📄 action_plan.md              # Detailed research roadmap
-│   └── � requirements.txt             # Environment dependencies
-├── 🔬 Core Implementation
-│   ├── 🐍 train_yolo_model.py         # Main training pipeline
-│   ├── 🐍 data_preparation.py         # Dataset processing utilities
-│   ├── 🐍 check_gpu.py                # Hardware verification
-│   └── 🐍 yolo_model_test.py          # Model evaluation tools
-├── 📊 Research Data
-│   ├── 📁 Datasets/                   # Raw research datasets
-│   │   ├── 📁 shapes/                 # Geometric shapes dataset
-│   │   ├── 📁 emnist/                 # Character recognition dataset
-│   │   └── 📁 mixed_test/             # Target domain samples (48 images)
-│   └── 📁 YOLO_Dataset/               # Processed training data
-│       ├── 📄 dataset.yaml           # Dataset configuration
-│       ├── 📁 images/train/val/test/  # Organized image data
-│       └── 📁 labels/train/val/test/  # YOLO format annotations
-├── 🎯 Model Artifacts
-│   └── 📁 Models/YOLO/
-│       ├── � yolov8n.pt             # Pre-trained base model
-│       └── 📁 deployment/             # Trained models for deployment
-└── 📈 Research Results
-    └── 📁 Plots/
-        ├── � mixed_dataset_analysis.png      # Dataset distribution analysis
-        ├── � shape_analysis.png              # Geometric shape distribution
-        ├── � yolo_model_comparison.png       # Architecture comparison
-        └── 📊 rpi_deployment_metrics.png      # Edge device performance
-```
-
-## �️ Implementation Guide
+## ⚙️ Implementation Guide
 
 ### Training Pipeline Execution
 
