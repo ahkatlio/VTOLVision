@@ -101,11 +101,9 @@ class ActionPlanTracker:
         with open(self.markdown_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Find all checkbox items
         checkbox_pattern = r'^- \[([ x])\] (.+)$'
         matches = re.findall(checkbox_pattern, content, re.MULTILINE)
         
-        # Extract phase information
         phase_pattern = r'^## ([🎯🔧🚀📱🏁].*?) \(Week \d+\)$'
         phases = re.findall(phase_pattern, content, re.MULTILINE)
         
@@ -140,7 +138,6 @@ class ActionPlanTracker:
             'phases': {}
         }
         
-        # Group tasks by phase
         phase_tasks = {}
         for task in tasks:
             phase = task['phase']
@@ -148,7 +145,6 @@ class ActionPlanTracker:
                 phase_tasks[phase] = []
             phase_tasks[phase].append(task)
         
-        # Calculate progress for each phase
         total_completed = 0
         total_tasks = 0
         
@@ -184,7 +180,6 @@ class ActionPlanTracker:
         
         progress = self.calculate_progress(tasks)
         
-        # Overall progress panel
         overall = progress['overall']
         console.print(Panel(
             f"[bold green]Overall Progress: {overall['completed']}/{overall['total']} tasks completed[/bold green]\n"
@@ -193,7 +188,6 @@ class ActionPlanTracker:
             border_style="green"
         ))
         
-        # Phase-wise progress table
         table = Table(title="📊 Phase-wise Progress")
         table.add_column("Phase", style="cyan", width=40)
         table.add_column("Progress", style="green", width=15)
@@ -205,12 +199,10 @@ class ActionPlanTracker:
             total = phase_progress['total']
             percentage = phase_progress['percentage']
             
-            # Create a simple progress bar
             bar_length = 20
             filled_length = int(bar_length * percentage / 100)
             bar = "█" * filled_length + "░" * (bar_length - filled_length)
             
-            # Color coding based on completion
             if percentage == 100:
                 status_style = "bold green"
             elif percentage >= 50:
@@ -227,7 +219,6 @@ class ActionPlanTracker:
         
         console.print(table)
         
-        # Detailed task breakdown
         console.print("\n📋 [bold]Detailed Task Status:[/bold]")
         
         current_phase = None
@@ -240,7 +231,6 @@ class ActionPlanTracker:
             status_color = "green" if task['completed'] else "red"
             console.print(f"  {status_icon} [{status_color}]{task['task']}[/{status_color}]")
         
-        # Next actions suggestion
         incomplete_tasks = [t for t in tasks if not t['completed']]
         if incomplete_tasks:
             console.print(f"\n🔍 [bold]Next Action:[/bold] [yellow]{incomplete_tasks[0]['task']}[/yellow]")
@@ -257,7 +247,6 @@ class ActionPlanTracker:
         with open(self.markdown_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Update timestamp
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         timestamp_pattern = r'\*\*Generated on:\*\* .+'
         updated_content = re.sub(
@@ -266,7 +255,6 @@ class ActionPlanTracker:
             content
         )
         
-        # Add last updated line if not present
         if "**Last updated:**" not in updated_content:
             updated_content = updated_content.replace(
                 f"**Generated on:** {timestamp}",
