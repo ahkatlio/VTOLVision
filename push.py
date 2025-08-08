@@ -18,12 +18,10 @@ def get_modified_files():
             continue
         status, file = line[:2], line[3:]
         
-        # Handle different git status codes
         status_code = status.strip()
         if status_code in {'M', 'A', '??', 'D', 'R', 'C', 'U'}:
             files.append(file)
             
-            # Map status codes to readable descriptions
             status_map = {
                 'M': ('Modified', 'yellow'),
                 'A': ('Added', 'green'), 
@@ -47,7 +45,6 @@ def push_files_one_by_one():
         console.print(Panel("✨ No modified files to push! Repository is clean! ✨", style="bold green"))
         return
 
-    # Create enhanced table
     table = Table(
         title="📋 Files Ready for Commit & Push", 
         title_style="bold cyan",
@@ -78,7 +75,19 @@ def push_files_one_by_one():
     console.print(table)
     console.print()
     
-    # Progress bar for the push process
+    console.print(Panel(
+        "[yellow]⚠️ SLOW INTERNET MODE ⚠️[/yellow]\n"
+        "This will push files ONE BY ONE (not batched)\n"
+        "• Each file gets its own commit and push\n"
+        "• If internet fails, you won't lose previous progress\n"
+        "• Takes longer but more reliable for slow connections\n\n"
+        "[cyan]Continue with individual file pushing?[/cyan]",
+        style="orange3"
+    ))
+    
+    response = input("Press Enter to continue or Ctrl+C to cancel: ")
+    console.print()
+    
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -92,14 +101,16 @@ def push_files_one_by_one():
         for i, file in enumerate(files):
             status_text, status_color = file_status[file]
             
-            # Update progress description
             progress.update(push_task, description=f"[{status_color}]Processing {file}...")
             
-            # Add file (this handles both new files and deletions)
             console.print(f"[yellow]📂 Adding:[/yellow] {file}")
-            subprocess.run(['git', 'add', file], capture_output=True)
+            add_result = subprocess.run(['git', 'add', file], capture_output=True, text=True)
             
-            # Create descriptive commit message based on status
+            if add_result.returncode != 0:
+                console.print(f"[red]❌ Failed to add {file}: {add_result.stderr}[/red]")
+                progress.update(push_task, advance=1)
+                continue
+            
             if status_text == 'Deleted':
                 commit_msg = f"🗑️ Remove {file}"
             elif status_text == 'Added' or status_text == 'Untracked':
@@ -112,27 +123,33 @@ def push_files_one_by_one():
                 commit_msg = f"✨ {status_text} {file}"
             
             console.print(f"[blue]💾 Committing:[/blue] {commit_msg}")
-            subprocess.run(['git', 'commit', '-m', commit_msg], capture_output=True)
+            commit_result = subprocess.run(['git', 'commit', '-m', commit_msg], capture_output=True, text=True)
             
-            console.print(f"[magenta]🚀 Pushing:[/magenta] {file}")
-            result = subprocess.run(['git', 'push'], capture_output=True, text=True)
+            if commit_result.returncode != 0:
+                console.print(f"[orange3]⚠️ Nothing to commit for {file} (already staged?)[/orange3]")
+                progress.update(push_task, advance=1)
+                continue
             
-            if result.returncode == 0:
+            console.print(f"[magenta]🚀 Pushing:[/magenta] {file} (individual push for slow internet)")
+            push_result = subprocess.run(['git', 'push'], capture_output=True, text=True)
+            
+            if push_result.returncode == 0:
                 console.print(f"[green]✅ Successfully pushed {file}![/green]")
             else:
-                console.print(f"[red]❌ Failed to push {file}: {result.stderr}[/red]")
+                console.print(f"[red]❌ Failed to push {file}:[/red]")
+                console.print(f"[red]Error: {push_result.stderr}[/red]")
             
-            console.print("─" * 50)
+            console.print("─" * 60)
             
-            # Update progress
             progress.update(push_task, advance=1)
-            time.sleep(0.1)  # Small delay for visual effect
+            time.sleep(0.2) 
     
     # Final celebration
     console.print()
     console.print(Panel.fit(
         f"🎉 SUCCESS! 🎉\n"
-        f"📊 Processed {len(files)} files\n"
+        f"📊 Processed {len(files)} files individually\n"
+        f"🐌 Slow internet friendly: One file at a time\n"
         f"🚀 All changes pushed to repository!\n"
         f"✨ VTOL Vision is ready for takeoff! ✨", 
         style="bold green"
