@@ -58,32 +58,179 @@ def download_shapes():
     console.print(Panel("Shape dataset ready!", style="green"))
 
 def create_simple_shapes(dest_dir):
-    """Create a simple shape dataset if the generator fails"""
+    """Create an advanced shape dataset with random positions, rotations, and effects"""
     import cv2
     import numpy as np
+    import random
     
-    console.print(Panel("Creating simple shape dataset manually...", style="cyan"))
+    console.print(Panel("🎨 Creating SUPER COOL shape dataset with random variations! 🎨", style="magenta"))
     
-    shapes = ['circle', 'rectangle', 'triangle']
-    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
+    shapes = ['circle', 'rectangle', 'triangle', 'pentagon', 'hexagon', 'star']
+    # Enhanced color palette with more vibrant colors
+    colors = [
+        (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255),
+        (255, 128, 0), (128, 0, 255), (255, 192, 203), (0, 128, 255), (128, 255, 0), (255, 20, 147)
+    ]
     
-    for i in range(100):  # Create 100 simple shapes
-        img = np.zeros((200, 200, 3), dtype=np.uint8)
+    def add_noise(img):
+        """Add subtle noise for realism"""
+        noise = np.random.normal(0, 10, img.shape).astype(np.uint8)
+        return cv2.add(img, noise)
+    
+    def create_background_pattern(img_size):
+        """Create interesting background patterns"""
+        bg = np.zeros((img_size, img_size, 3), dtype=np.uint8)
+        pattern_type = random.choice(['gradient', 'dots', 'lines', 'solid'])
+        
+        if pattern_type == 'gradient':
+            for i in range(img_size):
+                intensity = int(30 * i / img_size)
+                bg[i, :] = [intensity, intensity//2, intensity//3]
+        elif pattern_type == 'dots':
+            for _ in range(20):
+                x, y = random.randint(0, img_size-1), random.randint(0, img_size-1)
+                cv2.circle(bg, (x, y), 3, (20, 20, 20), -1)
+        elif pattern_type == 'lines':
+            for _ in range(5):
+                x1, y1 = random.randint(0, img_size), random.randint(0, img_size)
+                x2, y2 = random.randint(0, img_size), random.randint(0, img_size)
+                cv2.line(bg, (x1, y1), (x2, y2), (15, 15, 15), 1)
+        
+        return bg
+    
+    def rotate_shape(points, angle, center):
+        """Rotate shape points around center"""
+        cos_a, sin_a = np.cos(angle), np.sin(angle)
+        rotation_matrix = np.array([[cos_a, -sin_a], [sin_a, cos_a]])
+        
+        # Translate to origin, rotate, translate back
+        translated = points - center
+        rotated = np.dot(translated, rotation_matrix.T)
+        return rotated + center
+    
+    for i in range(500):  # Create 500 diverse shapes
+        img_size = random.randint(150, 250)  # Random image sizes
+        img = create_background_pattern(img_size)
+        
         shape = shapes[i % len(shapes)]
-        color = colors[i % len(colors)]
+        color = random.choice(colors)
+        
+        # Random position (ensuring shape stays within bounds)
+        margin = 50
+        center_x = random.randint(margin, img_size - margin)
+        center_y = random.randint(margin, img_size - margin)
+        
+        # Random size
+        base_size = random.randint(20, 40)
+        
+        # Random rotation angle
+        rotation = random.uniform(0, 2 * np.pi)
         
         if shape == 'circle':
-            cv2.circle(img, (100, 100), 50, color, -1)
+            radius = base_size
+            cv2.circle(img, (center_x, center_y), radius, color, -1)
+            # Add border for definition
+            cv2.circle(img, (center_x, center_y), radius, (255, 255, 255), 2)
+            
         elif shape == 'rectangle':
-            cv2.rectangle(img, (50, 50), (150, 150), color, -1)
+            # Create rectangle points
+            half_w, half_h = base_size, int(base_size * random.uniform(0.5, 1.5))
+            rect_pts = np.array([
+                [-half_w, -half_h], [half_w, -half_h], 
+                [half_w, half_h], [-half_w, half_h]
+            ], dtype=np.float32)
+            
+            # Rotate and translate
+            rotated_pts = rotate_shape(rect_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+            
         elif shape == 'triangle':
-            pts = np.array([[100, 50], [50, 150], [150, 150]], np.int32)
-            cv2.fillPoly(img, [pts], color)
+            # Create triangle points
+            tri_pts = np.array([
+                [0, -base_size], [-base_size * 0.866, base_size * 0.5], 
+                [base_size * 0.866, base_size * 0.5]
+            ], dtype=np.float32)
+            
+            # Rotate and translate
+            rotated_pts = rotate_shape(tri_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+            
+        elif shape == 'pentagon':
+            # Create pentagon points
+            angles = np.linspace(0, 2*np.pi, 6)[:-1] - np.pi/2  # Start from top
+            pent_pts = np.array([[base_size * np.cos(a), base_size * np.sin(a)] for a in angles])
+            
+            # Rotate and translate
+            rotated_pts = rotate_shape(pent_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+            
+        elif shape == 'hexagon':
+            # Create hexagon points
+            angles = np.linspace(0, 2*np.pi, 7)[:-1]
+            hex_pts = np.array([[base_size * np.cos(a), base_size * np.sin(a)] for a in angles])
+            
+            # Rotate and translate
+            rotated_pts = rotate_shape(hex_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+            
+        elif shape == 'star':
+            # Create 5-pointed star
+            outer_radius = base_size
+            inner_radius = base_size * 0.4
+            star_pts = []
+            
+            for j in range(10):
+                angle = j * np.pi / 5 - np.pi/2
+                if j % 2 == 0:  # Outer points
+                    r = outer_radius
+                else:  # Inner points
+                    r = inner_radius
+                star_pts.append([r * np.cos(angle), r * np.sin(angle)])
+            
+            star_pts = np.array(star_pts, dtype=np.float32)
+            
+            # Rotate and translate
+            rotated_pts = rotate_shape(star_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+        
+        # Add some noise for realism
+        img = add_noise(img)
+        
+        # Add random small artifacts (like dust or scratches)
+        if random.random() < 0.3:  # 30% chance
+            for _ in range(random.randint(1, 3)):
+                x1, y1 = random.randint(0, img_size), random.randint(0, img_size)
+                x2, y2 = random.randint(x1-10, x1+10), random.randint(y1-10, y1+10)
+                cv2.line(img, (x1, y1), (x2, y2), (100, 100, 100), 1)
         
         filename = f"{shape}_{i:03d}.png"
         cv2.imwrite(os.path.join(dest_dir, filename), img)
+        
+        # Progress indicator
+        if (i + 1) % 50 == 0:
+            console.print(f"🎯 Generated {i + 1}/500 super cool shapes!", style="green")
     
-    console.print(Panel("Simple shape dataset created (100 images)!", style="green"))
+    console.print(Panel("🚀 SUPER COOL shape dataset created (500 diverse images with random rotations, positions, and effects)! 🚀", style="green"))
 
 # 2. Download color names CSV
 def download_colors():
