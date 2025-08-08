@@ -39,7 +39,7 @@ Thumbs.db
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Large dataset files (optional - uncomment if datasets are too large)
+# Large dataset files 
 # Datasets/emnist/
 # Datasets/shapes/
 
