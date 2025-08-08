@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 VTOL Vision - Enhanced Data Preparation
 =====================================
@@ -74,6 +73,21 @@ class VTOLDataPreparator:
             'test_images': 0,
             'annotations_created': 0
         }
+    
+    def add_noise(self, img):
+        """Add subtle noise for realism - EXACT same as mixed dataset"""
+        noise = np.random.normal(0, 5, img.shape).astype(np.uint8)
+        return cv2.add(img, noise)
+    
+    def add_random_lines(self, img):
+        """Add random lines for extra realism - EXACT same as mixed dataset"""
+        img_size = img.shape[0]
+        if random.random() < 0.4:  # 40% chance
+            for _ in range(random.randint(1, 3)):
+                pt1 = (random.randint(0, img_size), random.randint(0, img_size))
+                pt2 = (random.randint(0, img_size), random.randint(0, img_size))
+                cv2.line(img, pt1, pt2, (random.randint(50, 150),) * 3, 1)
+        return img
     
     def create_realistic_background(self, img_size=640):
         """Create realistic outdoor-like backgrounds (from mixed dataset style)"""
@@ -224,18 +238,20 @@ class VTOLDataPreparator:
             cv2.ellipse(img, (center_x, center_y), axes, rotation * 180/np.pi, 0, 360, (255, 255, 255), 2)
             
         elif shape == 'heart':
-            # Simple heart approximation using circles and triangle
-            heart_size = int(size * 0.7)
-            cv2.circle(img, (center_x - heart_size//2, center_y - heart_size//2), heart_size//2, color, -1)
-            cv2.circle(img, (center_x + heart_size//2, center_y - heart_size//2), heart_size//2, color, -1)
+            # Proper heart shape using parametric equations (matching mixed dataset)
+            heart_pts = []
+            for t in np.linspace(0, 2*np.pi, 20):
+                x = size * 0.8 * (16 * np.sin(t)**3) / 16
+                y = -size * 0.8 * (13 * np.cos(t) - 5 * np.cos(2*t) - 2 * np.cos(3*t) - np.cos(4*t)) / 16
+                heart_pts.append([x, y])
             
-            # Triangle bottom
-            tri_pts = np.array([
-                [center_x - heart_size, center_y],
-                [center_x + heart_size, center_y],
-                [center_x, center_y + heart_size]
-            ], dtype=np.int32)
-            cv2.fillPoly(img, [tri_pts], color)
+            heart_pts = np.array(heart_pts, dtype=np.float32)
+            rotated_pts = self.rotate_shape(heart_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
             
         elif shape == 'cross':
             # Draw cross as two rectangles
@@ -401,6 +417,11 @@ class VTOLDataPreparator:
                     img_filename = f"train_sample_{i:04d}.jpg"
                     temp_path = Path("temp_training") / img_filename
                     temp_path.parent.mkdir(exist_ok=True)
+                    
+                    # Apply noise and random lines for realism (EXACT same as mixed dataset)
+                    img = self.add_noise(img)
+                    img = self.add_random_lines(img)
+                    
                     cv2.imwrite(str(temp_path), img)
                     
                     # Update annotations with correct path
