@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
@@ -15,21 +16,74 @@ os.makedirs(DATASETS_DIR, exist_ok=True)
 def download_shapes():
     repo_url = "https://github.com/elkorchi/2DGeometricShapesGenerator.git"
     repo_dir = os.path.join(DATASETS_DIR, "2DGeometricShapesGenerator")
+    
+    # Clone the repository
     if not os.path.exists(repo_dir):
         console.print(Panel("Cloning 2DGeometricShapesGenerator...", style="cyan"))
         subprocess.run(["git", "clone", repo_url, repo_dir], check=True)
     else:
         console.print(Panel("2DGeometricShapesGenerator already cloned.", style="green"))
     
+    # Install required dependencies for shape generator (skip problematic requirements.txt)
+    console.print(Panel("Installing shape generator dependencies...", style="cyan"))
+    subprocess.run(["pip", "install", "click", "pillow", "opencv-python", "numpy"], check=True)
+    
     # Generate shapes
     dest_dir = os.path.join(DATASETS_DIR, "shapes")
     os.makedirs(dest_dir, exist_ok=True)
-    console.print(Panel(f"Generating 10,000 shapes in {dest_dir}...", style="cyan"))
-    subprocess.run([
-        "python", os.path.join(repo_dir, "shape_generator.py"),
-        "generate-shapes", "--size=10000", f"--destination={dest_dir}"
-    ], check=True)
+    console.print(Panel(f"Generating 1,000 shapes in {dest_dir} (reduced for testing)...", style="cyan"))
+    
+    # Change to repo directory to run the generator
+    original_cwd = os.getcwd()
+    os.chdir(repo_dir)
+    try:
+        # Use relative path and smaller dataset for testing
+        subprocess.run([
+            "python", "shape_generator.py",
+            "generate-shapes", "--size=1000", f"--destination=..{os.sep}shapes"
+        ], check=True)
+    except Exception as e:
+        console.print(Panel(f"Shape generation failed: {e}. Creating simple shape dataset manually...", style="yellow"))
+        # If the generator fails, create a simple placeholder
+        os.chdir(original_cwd)
+        create_simple_shapes(dest_dir)
+        return
+    finally:
+        os.chdir(original_cwd)
+    
+    # Clean up the repository after generating shapes
+    console.print(Panel("Cleaning up shape generator repository...", style="yellow"))
+    shutil.rmtree(repo_dir)
+    
     console.print(Panel("Shape dataset ready!", style="green"))
+
+def create_simple_shapes(dest_dir):
+    """Create a simple shape dataset if the generator fails"""
+    import cv2
+    import numpy as np
+    
+    console.print(Panel("Creating simple shape dataset manually...", style="cyan"))
+    
+    shapes = ['circle', 'rectangle', 'triangle']
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
+    
+    for i in range(100):  # Create 100 simple shapes
+        img = np.zeros((200, 200, 3), dtype=np.uint8)
+        shape = shapes[i % len(shapes)]
+        color = colors[i % len(colors)]
+        
+        if shape == 'circle':
+            cv2.circle(img, (100, 100), 50, color, -1)
+        elif shape == 'rectangle':
+            cv2.rectangle(img, (50, 50), (150, 150), color, -1)
+        elif shape == 'triangle':
+            pts = np.array([[100, 50], [50, 150], [150, 150]], np.int32)
+            cv2.fillPoly(img, [pts], color)
+        
+        filename = f"{shape}_{i:03d}.png"
+        cv2.imwrite(os.path.join(dest_dir, filename), img)
+    
+    console.print(Panel("Simple shape dataset created (100 images)!", style="green"))
 
 # 2. Download color names CSV
 def download_colors():
@@ -45,16 +99,45 @@ def download_colors():
 
 # 3. Download EMNIST (ByClass split)
 def download_emnist():
-    emnist_url = "http://www.itl.nist.gov/iaui/vip/cs_links/EMNIST/gzip.zip"
-    dest_zip = os.path.join(DATASETS_DIR, "emnist_gzip.zip")
+    # Try multiple EMNIST sources
+    emnist_urls = [
+        "https://www.itl.nist.gov/iaui/vip/cs_links/EMNIST/gzip.zip",
+        "https://biometrics.nist.gov/cs_links/EMNIST/gzip.zip"
+    ]
+    
+    dest_dir = os.path.join(DATASETS_DIR, "emnist")
+    os.makedirs(dest_dir, exist_ok=True)
+    dest_zip = os.path.join(dest_dir, "emnist_gzip.zip")
+    
     if not os.path.exists(dest_zip):
-        console.print(Panel("Downloading EMNIST ByClass dataset...", style="cyan"))
-        with requests.get(emnist_url, stream=True) as r:
-            r.raise_for_status()
-            with open(dest_zip, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-        console.print(Panel("EMNIST dataset downloaded!", style="green"))
+        console.print(Panel("Downloading EMNIST dataset...", style="cyan"))
+        
+        for url in emnist_urls:
+            try:
+                console.print(f"Trying URL: {url}")
+                response = requests.get(url, stream=True, timeout=30)
+                response.raise_for_status()
+                
+                with open(dest_zip, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+                
+                console.print(Panel("EMNIST dataset downloaded successfully!", style="green"))
+                return
+                
+            except Exception as e:
+                console.print(f"Failed with {url}: {e}")
+                continue
+        
+        # If all URLs fail, create a placeholder file with instructions
+        with open(os.path.join(dest_dir, "DOWNLOAD_INSTRUCTIONS.txt"), "w") as f:
+            f.write("EMNIST Download Instructions:\n")
+            f.write("1. Visit: https://www.nist.gov/itl/products-and-services/emnist-dataset\n")
+            f.write("2. Download the EMNIST ByClass dataset manually\n")
+            f.write("3. Extract it to this folder\n")
+        
+        console.print(Panel("EMNIST auto-download failed. Check DOWNLOAD_INSTRUCTIONS.txt", style="yellow"))
     else:
         console.print(Panel("EMNIST dataset already exists.", style="green"))
 
