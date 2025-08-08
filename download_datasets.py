@@ -1,6 +1,7 @@
 import os
 import subprocess
 import shutil
+import stat
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
@@ -12,50 +13,36 @@ DATASETS_DIR = "Datasets"
 
 os.makedirs(DATASETS_DIR, exist_ok=True)
 
-# 1. Download and generate shape dataset
+def remove_readonly(func, path, _):
+    """Error handler for Windows readonly files"""
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+def safe_remove_tree(path):
+    """Safely remove directory tree, handling Windows permission issues"""
+    if os.path.exists(path):
+        console.print(Panel(f"Cleaning up {os.path.basename(path)} repository...", style="yellow"))
+        try:
+            # On Windows, use onerror to handle readonly files
+            if os.name == 'nt':  # Windows
+                shutil.rmtree(path, onerror=remove_readonly)
+            else:
+                shutil.rmtree(path)
+            console.print(f"✅ Successfully removed {os.path.basename(path)}", style="green")
+        except Exception as e:
+            console.print(f"⚠️ Warning: Could not fully remove {path}: {e}", style="yellow")
+
+# 1. Generate super cool shape dataset
 def download_shapes():
-    repo_url = "https://github.com/elkorchi/2DGeometricShapesGenerator.git"
-    repo_dir = os.path.join(DATASETS_DIR, "2DGeometricShapesGenerator")
+    console.print(Panel("🎨 Generating SUPER COOL shape dataset! 🎨", style="magenta"))
     
-    # Clone the repository
-    if not os.path.exists(repo_dir):
-        console.print(Panel("Cloning 2DGeometricShapesGenerator...", style="cyan"))
-        subprocess.run(["git", "clone", repo_url, repo_dir], check=True)
-    else:
-        console.print(Panel("2DGeometricShapesGenerator already cloned.", style="green"))
-    
-    # Install required dependencies for shape generator (skip problematic requirements.txt)
-    console.print(Panel("Installing shape generator dependencies...", style="cyan"))
-    subprocess.run(["pip", "install", "click", "pillow", "opencv-python", "numpy"], check=True)
-    
-    # Generate shapes
+    # Generate shapes directly with our superior generator
     dest_dir = os.path.join(DATASETS_DIR, "shapes")
     os.makedirs(dest_dir, exist_ok=True)
-    console.print(Panel(f"Generating 1,000 shapes in {dest_dir} (reduced for testing)...", style="cyan"))
     
-    # Change to repo directory to run the generator
-    original_cwd = os.getcwd()
-    os.chdir(repo_dir)
-    try:
-        # Use relative path and smaller dataset for testing
-        subprocess.run([
-            "python", "shape_generator.py",
-            "generate-shapes", "--size=1000", f"--destination=..{os.sep}shapes"
-        ], check=True)
-    except Exception as e:
-        console.print(Panel(f"Shape generation failed: {e}. Creating simple shape dataset manually...", style="yellow"))
-        # If the generator fails, create a simple placeholder
-        os.chdir(original_cwd)
-        create_simple_shapes(dest_dir)
-        return
-    finally:
-        os.chdir(original_cwd)
+    create_simple_shapes(dest_dir)
     
-    # Clean up the repository after generating shapes
-    console.print(Panel("Cleaning up shape generator repository...", style="yellow"))
-    shutil.rmtree(repo_dir)
-    
-    console.print(Panel("Shape dataset ready!", style="green"))
+    console.print(Panel("✅ Shape dataset ready!", style="green"))
 
 def create_simple_shapes(dest_dir):
     """Create an advanced shape dataset with random positions, rotations, and effects"""
@@ -299,12 +286,12 @@ if __name__ == "__main__":
     ) as progress:
         
         # Shape Dataset
-        shape_task = progress.add_task(description="[bold cyan]🔺 Downloading Shape Dataset...", total=None)
+        shape_task = progress.add_task(description="[bold cyan]🎨 Creating Super Cool Shapes...", total=None)
         try:
             download_shapes()
             progress.update(shape_task, description="[bold green]✅ Shape Dataset Complete!")
         except Exception as e:
-            console.print(Panel(f"[red]❌ Error downloading/generating shapes: {e}", style="red"))
+            console.print(Panel(f"[red]❌ Error generating shapes: {e}", style="red"))
             progress.update(shape_task, description="[bold red]❌ Shape Dataset Failed!")
         
         # Color Dataset  
