@@ -129,9 +129,7 @@ class VTOLDataPreparator:
         font_scale = size_scale * random.uniform(0.8, 1.5)
         thickness = random.randint(2, 4)
         
-        # First layer: White outline/border (thicker)
         cv2.putText(img, text, position, font, font_scale, (255, 255, 255), thickness + 2)
-        # Second layer: Colored text on top (thinner)
         cv2.putText(img, text, position, font, font_scale, color, thickness)
     
     def rotate_shape(self, points, angle, center):
@@ -195,7 +193,6 @@ class VTOLDataPreparator:
             cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
             
         elif shape == 'hexagon':
-            # Create hexagon points
             hexagon_pts = []
             for i in range(6):
                 angle = i * 2 * np.pi / 6
@@ -212,7 +209,6 @@ class VTOLDataPreparator:
             cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
             
         elif shape == 'star':
-            # Create 5-pointed star
             star_pts = []
             for i in range(10):
                 angle = i * np.pi / 5
@@ -238,7 +234,6 @@ class VTOLDataPreparator:
             cv2.ellipse(img, (center_x, center_y), axes, rotation * 180/np.pi, 0, 360, (255, 255, 255), 2)
             
         elif shape == 'heart':
-            # Proper heart shape using parametric equations (matching mixed dataset)
             heart_pts = []
             for t in np.linspace(0, 2*np.pi, 20):
                 x = size * 0.8 * (16 * np.sin(t)**3) / 16
@@ -254,22 +249,17 @@ class VTOLDataPreparator:
             cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
             
         elif shape == 'cross':
-            # Draw cross as two rectangles
             thickness = size // 3
-            # Vertical bar
             cv2.rectangle(img, (center_x - thickness//2, center_y - size), 
                          (center_x + thickness//2, center_y + size), color, -1)
-            # Horizontal bar  
             cv2.rectangle(img, (center_x - size, center_y - thickness//2),
                          (center_x + size, center_y + thickness//2), color, -1)
-            # White outlines
             cv2.rectangle(img, (center_x - thickness//2, center_y - size), 
                          (center_x + thickness//2, center_y + size), (255, 255, 255), 2)
             cv2.rectangle(img, (center_x - size, center_y - thickness//2),
                          (center_x + size, center_y + thickness//2), (255, 255, 255), 2)
             
         elif shape == 'arrow':
-            # Draw arrow pointing up
             arrow_pts = np.array([
                 [center_x, center_y - size],  # Top point
                 [center_x - size//2, center_y - size//2],  # Left
@@ -284,7 +274,6 @@ class VTOLDataPreparator:
             cv2.polylines(img, [arrow_pts], True, (255, 255, 255), 2)
             
         elif shape == 'trapezoid':
-            # Create trapezoid
             trap_pts = np.array([
                 [-size * 0.8, -size * 0.5],  # Top left
                 [size * 0.8, -size * 0.5],   # Top right
@@ -300,7 +289,6 @@ class VTOLDataPreparator:
             cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
             
         elif shape == 'octagon':
-            # Create octagon points
             octagon_pts = []
             for i in range(8):
                 angle = i * 2 * np.pi / 8
@@ -334,18 +322,15 @@ class VTOLDataPreparator:
             
             for i in range(num_samples):
                 try:
-                    # Create realistic background
                     img_size = 640
                     img = self.create_realistic_background(img_size)
                     
-                    # Random number of objects (1-3)
                     num_objects = random.randint(1, 3)
                     
                     image_annotations = []
                     used_positions = []  # Track positions to avoid overlap
                     
                     for j in range(num_objects):
-                        # Random object type
                         obj_category = random.choice(['shape', 'letter', 'number'])
                         
                         if obj_category == 'shape':
@@ -361,7 +346,6 @@ class VTOLDataPreparator:
                             class_id = self.number_classes[obj_class]
                             obj_type = 'number'
                         
-                        # Find non-overlapping position
                         attempts = 0
                         while attempts < 20:
                             margin = 80
@@ -386,19 +370,16 @@ class VTOLDataPreparator:
                         color = random.choice(self.colors)
                         rotation = random.uniform(0, 2 * np.pi)
                         
-                        # Draw object
                         if obj_type in self.shapes:
                             self.draw_shape(img, obj_type, (x, y), size, color, rotation)
                             bbox_size = size * 2.5
                         else:
-                            # Text rendering with EXACT same style as mixed dataset
                             text_size = random.uniform(1.5, 2.5)
-                            text_x = x - 20  # Adjust for text centering
+                            text_x = x - 20  
                             text_y = y + 15
                             self.add_text_element(img, obj_class, (text_x, text_y), color, text_size)
                             bbox_size = size * 2.0
                         
-                        # Create YOLO annotation
                         x_center = x / img_size
                         y_center = y / img_size
                         width = min(bbox_size / img_size, 1.0)
@@ -413,18 +394,15 @@ class VTOLDataPreparator:
                         
                         image_annotations.append(annotation)
                     
-                    # Save image
                     img_filename = f"train_sample_{i:04d}.jpg"
                     temp_path = Path("temp_training") / img_filename
                     temp_path.parent.mkdir(exist_ok=True)
                     
-                    # Apply noise and random lines for realism (EXACT same as mixed dataset)
                     img = self.add_noise(img)
                     img = self.add_random_lines(img)
                     
                     cv2.imwrite(str(temp_path), img)
                     
-                    # Update annotations with correct path
                     for ann in image_annotations:
                         ann['image_path'] = temp_path
                         all_annotations.append(ann)
@@ -527,7 +505,6 @@ class VTOLDataPreparator:
         val_images = image_paths[n_train:n_train + n_val]
         test_images = image_paths[n_train + n_val:]
         
-        # Create split annotations
         train_annotations = []
         val_annotations = []
         test_annotations = []
@@ -580,14 +557,12 @@ class VTOLDataPreparator:
                 
                 for img_path, img_annotations in image_groups.items():
                     try:
-                        # Copy image
                         img_path = Path(img_path)
                         img_filename = f"{split_name}_{img_path.stem}_{random.randint(1000, 9999)}.jpg"
                         
                         dest_img_path = self.yolo_dataset_dir / "images" / split_name / img_filename
                         shutil.copy2(img_path, dest_img_path)
                         
-                        # Create YOLO label file
                         label_filename = img_filename.replace('.jpg', '.txt')
                         label_path = self.yolo_dataset_dir / "labels" / split_name / label_filename
                         
@@ -604,7 +579,6 @@ class VTOLDataPreparator:
                         console.print(f"⚠️ Error processing {img_path}: {e}")
                         continue
             
-            # Update stats
             if split_name == 'train':
                 self.stats['train_images'] = len(image_groups)
             elif split_name == 'val':
@@ -648,26 +622,19 @@ the style of the mixed test dataset:
         """, style="green"))
         
         try:
-            # Generate training data matching mixed dataset style
             training_annotations = self.generate_training_data(800)
             
-            # Process mixed dataset for test
             mixed_annotations = self.process_mixed_dataset()
             
-            # Combine all annotations
             all_annotations = training_annotations + mixed_annotations
             console.print(f"\n📊 Total annotations: {len(all_annotations)}")
             
-            # Create splits
             split_data = self.create_train_val_test_splits(all_annotations)
             
-            # Copy images and create labels
             self.copy_images_and_create_labels(split_data)
             
-            # Create YAML config
             self.create_dataset_yaml()
             
-            # Clean up temp directory
             temp_dir = Path("temp_training")
             if temp_dir.exists():
                 shutil.rmtree(temp_dir)
