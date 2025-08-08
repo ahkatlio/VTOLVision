@@ -289,20 +289,50 @@ def download_emnist():
         console.print(Panel("EMNIST dataset already exists.", style="green"))
 
 if __name__ == "__main__":
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
-        progress.add_task(description="[bold]Downloading Shape Dataset...", total=None)
+    console.print(Panel.fit("🎯 VTOL VISION DATASET DOWNLOADER 🎯", style="bold magenta"))
+    console.print("🚀 Preparing datasets for shape, color, letter, and number detection!\n")
+    
+    with Progress(
+        SpinnerColumn(), 
+        TextColumn("[progress.description]{task.description}"),
+        console=console
+    ) as progress:
+        
+        # Shape Dataset
+        shape_task = progress.add_task(description="[bold cyan]🔺 Downloading Shape Dataset...", total=None)
         try:
             download_shapes()
+            progress.update(shape_task, description="[bold green]✅ Shape Dataset Complete!")
         except Exception as e:
-            console.print(Panel(f"[red]Error downloading/generating shapes: {e}", style="red"))
-        progress.add_task(description="[bold]Downloading Color Names...", total=None)
+            console.print(Panel(f"[red]❌ Error downloading/generating shapes: {e}", style="red"))
+            progress.update(shape_task, description="[bold red]❌ Shape Dataset Failed!")
+        
+        # Color Dataset  
+        color_task = progress.add_task(description="[bold yellow]🌈 Downloading Color Names...", total=None)
         try:
             download_colors()
+            progress.update(color_task, description="[bold green]✅ Color Dataset Complete!")
         except Exception as e:
-            console.print(Panel(f"[red]Error downloading colors: {e}", style="red"))
-        progress.add_task(description="[bold]Downloading EMNIST...", total=None)
+            console.print(Panel(f"[red]❌ Error downloading colors: {e}", style="red"))
+            progress.update(color_task, description="[bold red]❌ Color Dataset Failed!")
+        
+        # EMNIST Dataset
+        emnist_task = progress.add_task(description="[bold blue]🔤 Downloading EMNIST (Letters & Numbers)...", total=None)
         try:
             download_emnist()
+            progress.update(emnist_task, description="[bold green]✅ EMNIST Dataset Complete!")
         except Exception as e:
-            console.print(Panel(f"[red]Error downloading EMNIST: {e}", style="red"))
-    console.print(Panel("[bold green]All datasets are ready in the Datasets folder![/bold green]", style="green"))
+            console.print(Panel(f"[red]❌ Error downloading EMNIST: {e}", style="red"))
+            progress.update(emnist_task, description="[bold red]❌ EMNIST Dataset Failed!")
+    
+    console.print("\n" + "="*60)
+    console.print(Panel.fit(
+        "[bold green]🎉 ALL DATASETS ARE READY! 🎉\n"
+        "📁 Check the Datasets folder for:\n"
+        "   🔺 Shapes (500 diverse images with rotations)\n"
+        "   🌈 Colors (CSV for OpenCV detection)\n"
+        "   🔤 EMNIST (Letters & Numbers)\n\n"
+        "🚀 Ready for YOLO training on Raspberry Pi!", 
+        style="green"
+    ))
+    console.print("="*60)
