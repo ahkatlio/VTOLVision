@@ -1,0 +1,6 @@
+classes: 48
+deployment_notes: Model trained on style-matched dataset. Use ONNX for RPi4 deployment.
+framework: YOLOv8n
+input_size: 640
+model_format: PyTorch (.pt) and ONNX (.onnx)
+training_date: '2025-08-09 04:38:39'
