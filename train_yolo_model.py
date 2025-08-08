@@ -268,11 +268,9 @@ Phase 3: Training enhanced dataset with style-matched data
         deployment_dir.mkdir(exist_ok=True)
         
         try:
-            # Save PyTorch model
             model.save(deployment_dir / "vtol_vision_model.pt")
             console.print("✅ Saved PyTorch model (.pt)")
             
-            # Export to ONNX for RPi4 deployment
             model.export(format='onnx', 
                         imgsz=self.config['img_size'],
                         half=False,
@@ -281,7 +279,6 @@ Phase 3: Training enhanced dataset with style-matched data
                         opset=None)
             console.print("✅ Exported ONNX model (.onnx)")
             
-            # Create deployment info
             deployment_info = {
                 'model_format': 'PyTorch (.pt) and ONNX (.onnx)',
                 'input_size': self.config['img_size'],
@@ -303,22 +300,16 @@ Phase 3: Training enhanced dataset with style-matched data
     def run_training_pipeline(self):
         """Run the complete training pipeline"""
         try:
-            # Step 1: Validate dataset
             dataset_config = self.validate_dataset()
             
-            # Step 2: Setup training environment
             self.setup_training_environment()
             
-            # Step 3: Train model
             results, model = self.train_model(dataset_config)
             
-            # Step 4: Validate model
             test_results = self.validate_model(model, dataset_config)
             
-            # Step 5: Save for deployment
             self.save_model_for_deployment(model)
             
-            # Final summary
             console.print(Panel(f"""
 🎉 [bold green]PHASE 3 TRAINING COMPLETE![/bold green]
 
