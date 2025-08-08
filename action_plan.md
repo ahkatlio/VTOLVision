@@ -19,20 +19,21 @@
 - [x] Validate data quality and format
 
 ## 🚀 PHASE 3: Model Training (Week 3)
-- [ ] Set up training environment
-- [ ] Configure hyperparameters
+- [x] Set up training environment
+- [x] Configure hyperparameters
 - [ ] Train initial model (100 epochs)
 - [ ] Monitor training metrics
 - [ ] Validate on mixed test dataset
 - [ ] Fine-tune if needed
 
-## 📱 PHASE 4: Raspberry Pi Deployment (Week 4)
-- [ ] Set up Raspberry Pi environment
-- [ ] Install optimized PyTorch/YOLO
-- [ ] Port model to RPi
-- [ ] Implement real-time detection pipeline
-- [ ] Test with camera
-- [ ] Optimize performance
+## 📱 PHASE 4: Raspberry Pi Deployment (Week 4) - **Delegated to RPi4 Team**
+- [ ] Set up Raspberry Pi environment (RPi4 developer)
+- [ ] Install optimized PyTorch/YOLO (RPi4 developer)
+- [ ] Port trained model to RPi (RPi4 developer)
+- [ ] Implement real-time detection pipeline (RPi4 developer)
+- [ ] Test with camera (RPi4 developer)
+- [ ] Optimize performance (RPi4 developer)
+- [x] Provide trained model and documentation for deployment
 
 ## 🏁 PHASE 5: Integration & Testing (Week 5)
 - [ ] Integrate with VTOL control system
