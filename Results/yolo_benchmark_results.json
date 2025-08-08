@@ -1,0 +1,52 @@
+{
+  "timestamp": "2025-08-09 00:06:13",
+  "device": "Development PC",
+  "test_conditions": {
+    "input_size": "640x640",
+    "num_runs": 5,
+    "framework": "Ultralytics YOLOv8"
+  },
+  "models_location": "Models\\YOLO",
+  "results": {
+    "YOLOv8n": {
+      "model_name": "YOLOv8n",
+      "avg_inference_time": 0.09832882881164551,
+      "fps": 10.169957397901658,
+      "estimated_rpi_fps": 3.0509872193704974,
+      "num_detections": 0,
+      "total_params": 3157200,
+      "model_size_mb": 6.246372222900391,
+      "memory_usage_mb": 112.04376220703125
+    },
+    "YOLOv8s": {
+      "model_name": "YOLOv8s",
+      "avg_inference_time": 0.2381082534790039,
+      "fps": 4.199770421180208,
+      "estimated_rpi_fps": 1.2599311263540625,
+      "num_detections": 0,
+      "total_params": 11166560,
+      "model_size_mb": 21.54233169555664,
+      "memory_usage_mb": 142.5970458984375
+    },
+    "YOLOv5n": {
+      "model_name": "YOLOv5n",
+      "avg_inference_time": 0.14793639183044432,
+      "fps": 6.759661957594173,
+      "estimated_rpi_fps": 2.027898587278252,
+      "num_detections": 0,
+      "total_params": 2654816,
+      "model_size_mb": 5.305060386657715,
+      "memory_usage_mb": 110.1273193359375
+    },
+    "YOLOv5s": {
+      "model_name": "YOLOv5s",
+      "avg_inference_time": 0.3443354606628418,
+      "fps": 2.90414469097958,
+      "estimated_rpi_fps": 0.871243407293874,
+      "num_detections": 0,
+      "total_params": 9153152,
+      "model_size_mb": 17.720465660095215,
+      "memory_usage_mb": 134.91650390625
+    }
+  }
+}
