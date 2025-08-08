@@ -144,7 +144,6 @@ def push_files_one_by_one():
             progress.update(push_task, advance=1)
             time.sleep(0.2) 
     
-    # Final celebration
     console.print()
     console.print(Panel.fit(
         f"🎉 SUCCESS! 🎉\n"
