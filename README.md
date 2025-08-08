@@ -151,17 +151,18 @@ optimized_config = {
 - Style-matched training data reflecting target deployment conditions
 
 ### Phase 3: Model Training and Optimization 🔄
-**Current Status**: Training in progress (Epoch 3/100)
+**Current Status**: Training in progress (Epoch 12/100)
 
 **Training Environment**:
 - Hardware: NVIDIA GeForce MX450 (2GB VRAM)
 - Framework: PyTorch 2.5.1 with CUDA 12.1
 - Optimization: AdamW with reduced learning rate (0.001)
 
-**Current Metrics** (Epoch 3):
-- Precision: 53.8%
-- Recall: 8.5%
-- mAP50: 6.65%
+**Current Metrics** (Epoch 12):
+- Precision: 46.8%
+- Recall: 44.0%
+- mAP50: 40.6%
+- mAP50-95: 24.7%
 - GPU Utilization: ~2GB (optimal)
 
 ### Phase 4: Edge Deployment Optimization 📋
@@ -198,6 +199,191 @@ pip freeze > requirements.txt  # Update requirements immediately
 - Reproducible training results
 - Simplified deployment pipeline
 - Version conflict prevention
+
+## 👥 Team Workflow and File Guidelines
+
+### 📋 Project Progress Tracking
+
+**Use `action_plan_tracker.py` to monitor current progress and get next goals:**
+
+```bash
+# Check current progress and next objectives
+python action_plan_tracker.py
+```
+
+This will display:
+- ✅ Completed phases with timestamps
+- 🔄 Current active tasks
+- 📋 Next milestones and goals
+- 📈 Progress percentages and estimated timelines
+
+### 🗂️ File Usage Guidelines
+
+#### **Core Training Files**
+```bash
+# Main training pipeline
+python train_yolo_model.py      # Start model training (Phase 3)
+
+# Environment validation
+python check_gpu.py             # Verify GPU setup and memory
+python test_environment.py      # Validate Python/PyTorch versions
+```
+
+#### **Data Management Files**
+```bash
+# Dataset preparation
+python data_preparation.py      # Process and format training data
+python download_datasets.py     # Download raw datasets (if needed)
+```
+
+#### **Model Testing and Validation**
+```bash
+# Model evaluation
+python yolo_model_test.py       # Test trained models
+```
+
+#### **Progress and Documentation**
+```bash
+# Track progress
+python action_plan_tracker.py   # Check completion status and next goals
+
+# Update documentation
+# After any changes, update: README.md, action_plan.md
+```
+
+### 🔄 Team Development Workflow
+
+#### **For New Team Members:**
+
+1. **Setup Environment**
+   ```bash
+   git clone https://github.com/ahkatlio/VTOLVision.git
+   cd VTOLVision
+   .venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   ```
+
+2. **Check Current Status**
+   ```bash
+   python action_plan_tracker.py  # See what phase we're in
+   python check_gpu.py            # Verify hardware capabilities
+   ```
+
+3. **Understand Current Progress**
+   - Read the action plan output
+   - Check completed phases (✅)
+   - Identify current active tasks (🔄)
+   - Review next objectives (📋)
+
+#### **For Contributing Team Members:**
+
+1. **Before Starting Work**
+   ```bash
+   # Always check latest progress
+   python action_plan_tracker.py
+   
+   # Ensure environment is up to date
+   .venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   ```
+
+2. **After Installing New Libraries**
+   ```bash
+   pip install <new_library>
+   pip freeze > requirements.txt  # ⚠️ CRITICAL: Update requirements
+   git add requirements.txt
+   git commit -m "Add <new_library> dependency"
+   ```
+
+3. **After Completing Tasks**
+   ```bash
+   # Update progress tracker
+   python action_plan_tracker.py
+   
+   # Update documentation if needed
+   # Edit README.md or action_plan.md with new findings
+   ```
+
+#### **For RPi4 Development Team:**
+
+1. **Check Deployment Readiness**
+   ```bash
+   python action_plan_tracker.py  # Verify Phase 3 completion
+   ```
+
+2. **When Phase 3 Completes**
+   - Trained models will be in `Models/YOLO/deployment/`
+   - ONNX format optimized for RPi4
+   - Performance benchmarking data available
+
+3. **Deployment Files Location**
+   ```bash
+   Models/YOLO/deployment/
+   ├── vtol_vision_model.pt      # PyTorch model
+   ├── vtol_vision_model.onnx    # ONNX for RPi4
+   └── deployment_info.yaml     # Configuration details
+   ```
+
+### 📊 Progress Monitoring Guidelines
+
+#### **Daily Progress Checks**
+```bash
+# Run this at start of each work session
+python action_plan_tracker.py
+```
+
+#### **Understanding Progress Output**
+- **Phase Status Icons**:
+  - ✅ = Completed
+  - 🔄 = In Progress  
+  - 📋 = Planned/Delegated
+  - ⏳ = Waiting for Dependencies
+
+#### **Current Training Metrics** (Updated as of latest run)
+- **Epoch 12/100**: Significant progress in learning
+- **mAP50**: 40.6% (Target: >85%)
+- **Training Trajectory**: Steady improvement, on track for success
+- **GPU Utilization**: Optimal (2GB/2GB)
+
+### 🎯 Next Steps and Objectives
+
+#### **Immediate Goals** (Current Sprint)
+1. ✅ **Complete Phase 3 Training** (87% complete)
+   - Monitor training completion (est. ~2 hours remaining)
+   - Validate final model performance
+   - Generate performance benchmarks
+
+2. 📋 **Prepare Phase 4 Handoff**
+   - Export ONNX model for RPi4
+   - Document deployment requirements
+   - Create performance benchmarking suite
+
+#### **Success Criteria Checklist**
+- [ ] Training reaches >85% mAP50
+- [ ] Model validates successfully on test set
+- [ ] ONNX export completes without errors
+- [ ] Deployment documentation finalized
+- [ ] RPi4 team receives complete package
+
+### 🚨 Critical Notes for Team
+
+#### **Always Use Virtual Environment**
+```bash
+# Verify you see (.venv) in prompt before running any Python commands
+(.venv) PS E:\VTOLVision> python train_yolo_model.py  # ✅ Correct
+PS E:\VTOLVision> python train_yolo_model.py          # ❌ Wrong - missing venv
+```
+
+#### **Never Skip Requirements Update**
+```bash
+# After ANY pip install command
+pip freeze > requirements.txt  # This maintains team synchronization
+```
+
+#### **Progress Communication**
+- Use `action_plan_tracker.py` output in team updates
+- Include current epoch and mAP50 metrics in progress reports
+- Update README.md Current Progress section when phases complete
 
 ## ⚙️ Implementation Guide
 
