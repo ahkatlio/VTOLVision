@@ -275,6 +275,251 @@ def download_emnist():
     else:
         console.print(Panel("EMNIST dataset already exists.", style="green"))
 
+# 4. Generate mixed dataset for realistic testing
+def create_mixed_dataset():
+    """Create mixed dataset with shapes, letters, numbers, and colors for realistic camera testing"""
+    import cv2
+    import numpy as np
+    import random
+    import string
+    
+    console.print(Panel("🎭 Creating MIXED DATASET for realistic camera testing! 🎭", style="bold magenta"))
+    
+    dest_dir = os.path.join(DATASETS_DIR, "mixed_test")
+    os.makedirs(dest_dir, exist_ok=True)
+    
+    # Available elements
+    shapes = ['circle', 'rectangle', 'triangle', 'pentagon', 'hexagon', 'star']
+    letters = list(string.ascii_uppercase)
+    numbers = list('0123456789')
+    colors = [
+        (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255),
+        (255, 128, 0), (128, 0, 255), (255, 192, 203), (0, 128, 255), (128, 255, 0), (255, 20, 147),
+        (255, 165, 0), (128, 0, 128), (0, 128, 0), (255, 69, 0), (70, 130, 180), (220, 20, 60)
+    ]
+    
+    def create_realistic_background(img_size):
+        """Create realistic outdoor-like backgrounds"""
+        bg = np.zeros((img_size, img_size, 3), dtype=np.uint8)
+        bg_type = random.choice(['sky', 'grass', 'concrete', 'mixed'])
+        
+        if bg_type == 'sky':
+            # Sky-like gradient (light blue to white)
+            for i in range(img_size):
+                intensity = 135 + int(120 * i / img_size)
+                bg[i, :] = [intensity, intensity, 255]
+        elif bg_type == 'grass':
+            # Grass-like texture (green variations)
+            base_green = random.randint(60, 100)
+            for i in range(img_size):
+                for j in range(img_size):
+                    noise = random.randint(-20, 20)
+                    green_val = max(0, min(255, base_green + noise))
+                    bg[i, j] = [random.randint(10, 30), green_val, random.randint(10, 40)]
+        elif bg_type == 'concrete':
+            # Concrete-like texture (gray variations)
+            base_gray = random.randint(80, 120)
+            for i in range(img_size):
+                for j in range(img_size):
+                    noise = random.randint(-15, 15)
+                    gray_val = max(0, min(255, base_gray + noise))
+                    bg[i, j] = [gray_val, gray_val, gray_val]
+        else:  # mixed
+            # Random patches of different textures
+            patch_size = img_size // 4
+            for i in range(0, img_size, patch_size):
+                for j in range(0, img_size, patch_size):
+                    patch_color = random.choice([(100, 150, 80), (120, 120, 120), (180, 200, 255)])
+                    end_i = min(i + patch_size, img_size)
+                    end_j = min(j + patch_size, img_size)
+                    bg[i:end_i, j:end_j] = patch_color
+        
+        return bg
+    
+    def add_text_element(img, text, position, color, size_scale=1.0):
+        """Add text (letter or number) to image"""
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = size_scale * random.uniform(0.8, 1.5)
+        thickness = random.randint(2, 4)
+        
+        # Add white outline for better visibility
+        cv2.putText(img, text, position, font, font_scale, (255, 255, 255), thickness + 2)
+        cv2.putText(img, text, position, font, font_scale, color, thickness)
+    
+    def rotate_shape(points, angle, center):
+        """Rotate shape points around center"""
+        cos_a, sin_a = np.cos(angle), np.sin(angle)
+        rotation_matrix = np.array([[cos_a, -sin_a], [sin_a, cos_a]])
+        translated = points - center
+        rotated = np.dot(translated, rotation_matrix.T)
+        return rotated + center
+    
+    def draw_shape(img, shape, center, size, color, rotation=0):
+        """Draw a shape at specified position"""
+        center_x, center_y = center
+        
+        if shape == 'circle':
+            cv2.circle(img, (center_x, center_y), size, color, -1)
+            cv2.circle(img, (center_x, center_y), size, (255, 255, 255), 2)
+            
+        elif shape == 'rectangle':
+            half_w, half_h = size, int(size * random.uniform(0.6, 1.4))
+            rect_pts = np.array([
+                [-half_w, -half_h], [half_w, -half_h], 
+                [half_w, half_h], [-half_w, half_h]
+            ], dtype=np.float32)
+            
+            rotated_pts = rotate_shape(rect_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+            
+        elif shape == 'triangle':
+            tri_pts = np.array([
+                [0, -size], [-size * 0.866, size * 0.5], 
+                [size * 0.866, size * 0.5]
+            ], dtype=np.float32)
+            
+            rotated_pts = rotate_shape(tri_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+            
+        elif shape == 'pentagon':
+            angles = np.linspace(0, 2*np.pi, 6)[:-1] - np.pi/2
+            pent_pts = np.array([[size * np.cos(a), size * np.sin(a)] for a in angles])
+            
+            rotated_pts = rotate_shape(pent_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+            
+        elif shape == 'hexagon':
+            angles = np.linspace(0, 2*np.pi, 7)[:-1]
+            hex_pts = np.array([[size * np.cos(a), size * np.sin(a)] for a in angles])
+            
+            rotated_pts = rotate_shape(hex_pts, rotation, np.array([0, 0]))
+            rotated_pts += np.array([center_x, center_y])
+            rotated_pts = rotated_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [rotated_pts], color)
+            cv2.polylines(img, [rotated_pts], True, (255, 255, 255), 2)
+            
+        elif shape == 'star':
+            outer_radius = size
+            inner_radius = size * 0.4
+            star_pts = []
+            
+            for j in range(10):
+                angle = j * np.pi / 5 - np.pi/2 + rotation
+                if j % 2 == 0:
+                    r = outer_radius
+                else:
+                    r = inner_radius
+                star_pts.append([r * np.cos(angle), r * np.sin(angle)])
+            
+            star_pts = np.array(star_pts, dtype=np.float32)
+            star_pts += np.array([center_x, center_y])
+            star_pts = star_pts.astype(np.int32)
+            
+            cv2.fillPoly(img, [star_pts], color)
+            cv2.polylines(img, [star_pts], True, (255, 255, 255), 2)
+    
+    # Generate 200 mixed test images
+    for i in range(200):
+        img_size = random.randint(300, 500)  # Larger images for multiple elements
+        img = create_realistic_background(img_size)
+        
+        # Determine number of elements (2-5 elements per image)
+        num_elements = random.randint(2, 5)
+        used_positions = []
+        
+        elements_info = []  # Store info for filename
+        
+        for elem_idx in range(num_elements):
+            # Choose element type
+            element_type = random.choice(['shape', 'letter', 'number'])
+            color = random.choice(colors)
+            
+            # Find non-overlapping position
+            attempts = 0
+            while attempts < 50:  # Prevent infinite loops
+                if element_type == 'shape':
+                    size = random.randint(25, 45)
+                    margin = size + 10
+                else:  # text elements
+                    size = random.randint(30, 50)
+                    margin = size + 15
+                
+                center_x = random.randint(margin, img_size - margin)
+                center_y = random.randint(margin, img_size - margin)
+                
+                # Check for overlap
+                overlap = False
+                for used_pos in used_positions:
+                    dist = np.sqrt((center_x - used_pos[0])**2 + (center_y - used_pos[1])**2)
+                    if dist < (margin + used_pos[2]):  # used_pos[2] is the margin of existing element
+                        overlap = True
+                        break
+                
+                if not overlap:
+                    used_positions.append((center_x, center_y, margin))
+                    break
+                attempts += 1
+            
+            if attempts >= 50:  # Skip if couldn't find position
+                continue
+            
+            # Draw the element
+            rotation = random.uniform(0, 2 * np.pi)
+            
+            if element_type == 'shape':
+                shape = random.choice(shapes)
+                draw_shape(img, shape, (center_x, center_y), size, color, rotation)
+                elements_info.append(f"{shape}")
+                
+            elif element_type == 'letter':
+                letter = random.choice(letters)
+                # Adjust position for text baseline
+                text_pos = (center_x - 15, center_y + 15)
+                add_text_element(img, letter, text_pos, color, size/50.0)
+                elements_info.append(f"L{letter}")
+                
+            elif element_type == 'number':
+                number = random.choice(numbers)
+                # Adjust position for text baseline  
+                text_pos = (center_x - 15, center_y + 15)
+                add_text_element(img, number, text_pos, color, size/50.0)
+                elements_info.append(f"N{number}")
+        
+        # Add realistic noise and artifacts
+        noise = np.random.normal(0, 5, img.shape).astype(np.uint8)
+        img = cv2.add(img, noise)
+        
+        # Add some random lines/scratches (simulating real-world conditions)
+        if random.random() < 0.4:  # 40% chance
+            for _ in range(random.randint(1, 3)):
+                pt1 = (random.randint(0, img_size), random.randint(0, img_size))
+                pt2 = (random.randint(0, img_size), random.randint(0, img_size))
+                cv2.line(img, pt1, pt2, (random.randint(50, 150),) * 3, 1)
+        
+        # Create filename with element info
+        elements_str = "_".join(elements_info[:3])  # Limit filename length
+        filename = f"mixed_{i:03d}_{elements_str}.png"
+        cv2.imwrite(os.path.join(dest_dir, filename), img)
+        
+        # Progress indicator
+        if (i + 1) % 25 == 0:
+            console.print(f"🎯 Generated {i + 1}/200 mixed test images!", style="green")
+    
+    console.print(Panel("🚀 MIXED TEST DATASET created (200 realistic images with multiple elements)! 🚀", style="green"))
+
 if __name__ == "__main__":
     console.print(Panel.fit("🎯 VTOL VISION DATASET DOWNLOADER 🎯", style="bold magenta"))
     console.print("🚀 Preparing datasets for shape, color, letter, and number detection!\n")
@@ -311,6 +556,15 @@ if __name__ == "__main__":
         except Exception as e:
             console.print(Panel(f"[red]❌ Error downloading EMNIST: {e}", style="red"))
             progress.update(emnist_task, description="[bold red]❌ EMNIST Dataset Failed!")
+        
+        # Mixed Test Dataset
+        mixed_task = progress.add_task(description="[bold purple]🎭 Creating Mixed Test Dataset...", total=None)
+        try:
+            create_mixed_dataset()
+            progress.update(mixed_task, description="[bold green]✅ Mixed Test Dataset Complete!")
+        except Exception as e:
+            console.print(Panel(f"[red]❌ Error creating mixed dataset: {e}", style="red"))
+            progress.update(mixed_task, description="[bold red]❌ Mixed Test Dataset Failed!")
     
     console.print("\n" + "="*60)
     console.print(Panel.fit(
@@ -318,8 +572,10 @@ if __name__ == "__main__":
         "📁 Check the Datasets folder for:\n"
         "   🔺 Shapes (500 diverse images with rotations)\n"
         "   🌈 Colors (CSV for OpenCV detection)\n"
-        "   🔤 EMNIST (Letters & Numbers)\n\n"
-        "🚀 Ready for YOLO training on Raspberry Pi!", 
+        "   🔤 EMNIST (Letters & Numbers)\n"
+        "   🎭 Mixed Test (200 realistic multi-element images)\n\n"
+        "🚀 Ready for YOLO training on Raspberry Pi!\n"
+        "📸 Perfect for camera testing with mixed elements!", 
         style="green"
     ))
     console.print("="*60)
