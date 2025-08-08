@@ -9,7 +9,7 @@ import time
 console = Console()
 
 def get_modified_files():
-    result = subprocess.run(['git', 'status', '--porcelain'], capture_output=True, text=True)
+    result = subprocess.run(['git', 'status', '--porcelain'], capture_output=True, text=True, encoding='utf-8', errors='ignore')
     files = []
     file_status = {}
     
@@ -104,7 +104,7 @@ def push_files_one_by_one():
             progress.update(push_task, description=f"[{status_color}]Processing {file}...")
             
             console.print(f"[yellow]📂 Adding:[/yellow] {file}")
-            add_result = subprocess.run(['git', 'add', file], capture_output=True, text=True)
+            add_result = subprocess.run(['git', 'add', file], capture_output=True, text=True, encoding='utf-8', errors='ignore')
             
             if add_result.returncode != 0:
                 console.print(f"[red]❌ Failed to add {file}: {add_result.stderr}[/red]")
@@ -123,7 +123,7 @@ def push_files_one_by_one():
                 commit_msg = f"✨ {status_text} {file}"
             
             console.print(f"[blue]💾 Committing:[/blue] {commit_msg}")
-            commit_result = subprocess.run(['git', 'commit', '-m', commit_msg], capture_output=True, text=True)
+            commit_result = subprocess.run(['git', 'commit', '-m', commit_msg], capture_output=True, text=True, encoding='utf-8', errors='ignore')
             
             if commit_result.returncode != 0:
                 console.print(f"[orange3]⚠️ Nothing to commit for {file} (already staged?)[/orange3]")
@@ -131,7 +131,7 @@ def push_files_one_by_one():
                 continue
             
             console.print(f"[magenta]🚀 Pushing:[/magenta] {file} (individual push for slow internet)")
-            push_result = subprocess.run(['git', 'push'], capture_output=True, text=True)
+            push_result = subprocess.run(['git', 'push'], capture_output=True, text=True, encoding='utf-8', errors='ignore')
             
             if push_result.returncode == 0:
                 console.print(f"[green]✅ Successfully pushed {file}![/green]")
